@@ -1,3 +1,6 @@
+# To run the ingestion script using the Docker image:
+# docker run --env-file .env pg-to-snowflake
+
 services:
   postgres:
     image: "postgres:11"

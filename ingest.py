@@ -30,6 +30,8 @@ def ingest():
     # 2. Fetch Data
     try:
         df = pd.read_sql(f"SELECT * FROM {TABLE_NAME}", pg_conn)
+        # Convert columns to uppercase to avoid case sensitivity issues in Snowflake
+        df.columns = [c.upper() for c in df.columns]
         print(f"Fetched {len(df)} rows from Postgres.")
     except Exception as e:
         print(f"Postgres Read Error: {e}")
