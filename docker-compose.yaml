@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: "postgres:11"
+    container_name: "postgres11"
+    environment:
+      POSTGRES_USER: 'neondb_owner'
+      POSTGRES_PASSWORD: 'npg_rTE81kCXxLGl'
+    ports:
+      - "5432:5432"
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=logical"
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
