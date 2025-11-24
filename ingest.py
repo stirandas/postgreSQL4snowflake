@@ -32,6 +32,21 @@ def ingest():
         df = pd.read_sql(f"SELECT * FROM {TABLE_NAME}", pg_conn)
         # Convert columns to uppercase to avoid case sensitivity issues in Snowflake
         df.columns = [c.upper() for c in df.columns]
+        
+        # Enforce IST timezone for timestamp columns
+        for col in ['I_TS', 'U_TS']:
+            if col in df.columns:
+                # Ensure column is datetime
+                df[col] = pd.to_datetime(df[col])
+                
+                # Check if timezone aware
+                if df[col].dt.tz is None:
+                    # If naive, assume IST
+                    df[col] = df[col].dt.tz_localize('Asia/Kolkata')
+                else:
+                    # If aware, convert to IST
+                    df[col] = df[col].dt.tz_convert('Asia/Kolkata')
+                    
         print(f"Fetched {len(df)} rows from Postgres.")
     except Exception as e:
         print(f"Postgres Read Error: {e}")
@@ -67,7 +82,8 @@ def ingest():
             df,
             TABLE_NAME.upper(),
             auto_create_table=True,
-            overwrite=True
+            overwrite=True,
+            use_logical_type=True
         )
         if success:
             print(f"Success! Wrote {nrows} rows to Snowflake table {TABLE_NAME.upper()}.")
