@@ -67,3 +67,25 @@ To verify the ingestion:
     ```sql
     SELECT * FROM T_NSE_FII_DII_EQ_DATA;
     ```
+
+## Validation
+
+To ensure data accuracy, specifically for timestamps between PostgreSQL and Snowflake, you can run the validation script.
+
+1.  Ensure you have run the ingestion script first.
+2.  Run the validation test:
+    ```bash
+    python tests/validate_timestamps.py
+    ```
+    This script compares the `i_ts` and `u_ts` columns in both databases, accounting for timezone differences (IST), and reports any mismatches.
+
+## Technical Note: Timestamp Handling
+
+This project handles a specific nuance in transferring `TIMESTAMPTZ` data from PostgreSQL to Snowflake to ensure accuracy for the **Asia/Kolkata (IST)** timezone.
+
+-   **PostgreSQL**: Stores timestamps with timezone information. When queried, it returns an aware datetime object.
+-   **Snowflake**: When using the standard pandas connector, timestamps can sometimes be interpreted incorrectly if not explicitly handled, especially when mixed with naive and aware datetimes.
+-   **The Solution**:
+    -   The `ingest.py` script explicitly converts `I_TS` and `U_TS` columns to **UTC** and makes them **timezone-naive** before uploading.
+    -   This ensures Snowflake treats the values as absolute UTC points in time.
+    -   When querying Snowflake (as seen in the validation script), we convert these UTC values back to `'Asia/Kolkata'` to verify they match the original source of truth from PostgreSQL.
