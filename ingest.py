@@ -33,7 +33,7 @@ def ingest():
         # Convert columns to uppercase to avoid case sensitivity issues in Snowflake
         df.columns = [c.upper() for c in df.columns]
         
-        # Enforce IST timezone for timestamp columns
+        # Enforce IST then convert to UTC for Snowflake compatibility
         for col in ['I_TS', 'U_TS']:
             if col in df.columns:
                 # Ensure column is datetime
@@ -44,8 +44,11 @@ def ingest():
                     # If naive, assume IST
                     df[col] = df[col].dt.tz_localize('Asia/Kolkata')
                 else:
-                    # If aware, convert to IST
+                    # If aware, convert to IST to ensure correct base (optional but safe)
                     df[col] = df[col].dt.tz_convert('Asia/Kolkata')
+                
+                # Convert to UTC and make naive (so Snowflake treats it as UTC value)
+                df[col] = df[col].dt.tz_convert('UTC').dt.tz_localize(None)
                     
         print(f"Fetched {len(df)} rows from Postgres.")
     except Exception as e:
